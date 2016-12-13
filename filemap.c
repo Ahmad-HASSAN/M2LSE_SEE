@@ -1489,10 +1489,16 @@ retry_find:
 	 * le noyau continue à travailler car la page est en memoire cache on lit les pages suivantes
 	 * executées sur défaut de page mineur.
 	 */
+	
+	// Define counter for the minor and major
+	static int compteurMin, compteurMaj = 0;
+	
 	if (VM_SequentialReadHint(vma)) {
 		if (!page) {
 			page_cache_sync_readahead(mapping, ra, file,
 							   vmf->pgoff, 1);
+			// case of a major fault, reading from the disk
+			compteurMaj++;
 			page = find_lock_page(mapping, vmf->pgoff);
 			if (!page)
 				goto no_cached_page;
@@ -1500,6 +1506,8 @@ retry_find:
 		if (PageReadahead(page)) {
 			page_cache_async_readahead(mapping, ra, file, page,
 							   vmf->pgoff, 1);
+			// case of a minor fault, reading from the memory
+			compteurMin++;
 		}
 	}
 
